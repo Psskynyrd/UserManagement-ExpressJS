@@ -1,17 +1,24 @@
 const express = require("express");
+const moment = require('moment');
+
 const User = require("../models/user.model");
 const { getNextSequenceValue } = require("../utils/helper.util");
 
 const createUser = async (userData) => {
   let getId = await getNextSequenceValue("userId");
 
+  var bd =  moment(userData.birthDate, 'DD/MM/YYYY').toDate();
+
   let user = {
     userId: getId,
     ...userData,
+    birthDate: bd,
   };
 
   const newUser = new User(user);
-  return await newUser.save().catch((err) => {
+  return await newUser.save().then(() => {
+    console.log('Create User Successfully');
+  }).catch((err) => {
     throw new Error(err);
   });
 };
@@ -19,6 +26,7 @@ const createUser = async (userData) => {
 const getUsers = async () => {
   return await User.find({})
     .then((res) => {
+        console.log('Get All User Successfully');
       return res;
     })
     .catch((err) => {
@@ -29,6 +37,7 @@ const getUsers = async () => {
 const getUserById = async (userId) => {
   return await User.find({ userId })
     .then((res) => {
+        console.log('Get User By ID Successfully');
       return res;
     })
     .catch((err) => {
@@ -37,13 +46,21 @@ const getUserById = async (userId) => {
 };
 
 const updateUser = async (userId, updateData) => {
+
+    var bd =  moment(updateData.birthDate, 'DD/MM/YYYY').toDate();
+
+    var data = {
+        ...updateData,
+        birthDate: bd,
+    }
+    
   return await User.updateOne(
     { userId: userId },
-    { $set: updateData },
+    { $set: data },
     { upsert: true }
   )
     .then((res) => {
-      console.log(updateData);
+        console.log('Update User Successfully');
       return res;
     })
     .catch((err) => {
@@ -52,8 +69,9 @@ const updateUser = async (userId, updateData) => {
 };
 
 const deleteUser = async (userId) => {
-  return await User.findByIdAndDelete(userId)
+  return await User.deleteOne({ userId: userId })
     .then((res) => {
+        console.log('Delete User Successfully');
       return res;
     })
     .catch((err) => {
